@@ -1,0 +1,73 @@
+### Reverse Proxy ###
+A reverse proxy is a server that sits in front of web servers and forwards client (e.g. web browser) requests to those web servers.
+Reverse proxies are typically implemented to help increase security, performance, and reliability.
+
+Benefits of Reverse Proxy
+- Load Balancing  
+  A popular website that gets millions of users every day may not be able to handle all of its incoming site traffic with a single origin server. 
+  Instead, the site can be distributed among a pool of different servers, all handling requests for the same site.
+  A reverse proxy can provide a load balancing solution which will distribute the incoming traffic evenly among the different servers to prevent any single server from becoming overloaded.
+
+-  Protection from attacks  
+   With a reverse proxy in place, a web site or service never needs to reveal the IP address of their origin server(s). 
+   This makes it much harder for attackers to leverage a targeted attack against them such as DOS attack, CDN attack and more.
+
+- Caching  
+  A reverse proxy can also cache content, resulting in faster performance.
+
+- SSL encryption  
+  Encrypting and decrypting SSL communications for each client can be computationally expensive for an origin server. 
+  A reverse proxy can be configured to decrypt all incoming requests and encrypt all outgoing responses, freeing up valuable resources on the origin server.
+
+
+
+
+
+### Configuration Nginx ###
+#File Configuration 1
+nano /etc/nginx/nginx.conf 
+
+user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+include /etc/nginx/modules-enabled/*.conf;
+
+events {
+    worker_connections 768;
+    #multi_accept on;
+}
+
+http {
+
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalived_timeout 65;
+    types_hash_max_size 2048;
+
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    access_log /var/log/nginx/acces.log;
+    error_log /var/log/nginx/error.log;
+    include /etc/nginx/conf.d/*.conf;
+    include /etc/nginx/sites-enabled/*;
+
+    server {
+        listen 80;
+        server_name 206.189.132.205;
+
+        location / {
+            proxy_pass http://104.131.80.130;
+        }
+    }
+
+    server {
+        listen 8080;
+        server_name 206.189.132.205;
+
+        location /php {
+            proxy_pass http://206.189.130.80;
+        }
+    }
+}

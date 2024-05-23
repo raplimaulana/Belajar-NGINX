@@ -1,0 +1,42 @@
+### Enable SSL ###
+Secure Sockets Layer (SSL) is a standard security technology for establishing an encrypted link between a server and a client—typically a web server (website) and a browser, or a mail server and a mail client.
+
+
+
+
+### Configuration Nginx ###
+#create SSL 
+openssl req -x509 -days 100 -nodes -newkey rsa:2048 -keyout /etc/nginx/ssl/slef.key -out /etc/nginx/ssl/self.cert
+
+#File Configuration 
+nano /etc/nginx/nginx.conf 
+
+user www-data;
+worker_processes auto;
+load_module /etc/nginx/modules/ngx_http_image_filter_module.so;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include mime.types;
+
+    server {
+        listen 443 ssl;
+        server_name 104.131.80.130;
+
+        ssl_certificate /etc/nginx/ssl/self.cert;
+        ssl_certificate_key /etc/nginx/ssl/slef.key;
+
+        root /bloggingtemplate/;
+        index index.php index.html;
+
+        location / {
+            try_files $uri $uri/ =404;
+        }
+    }
+}
+
+#browser
+curl -I 104.131.80.130

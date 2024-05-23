@@ -1,0 +1,186 @@
+### Client Side Caching ###
+Web servers do not control client-side caching to full extent. 
+Obviously, but they may issue recommendations about what to cache and how, in the form of special HTTP response headers.
+
+##Cache-control Header  
+This is the most important header to set as it effectively ‘switches on’ caching in the browser.
+Without this header the browser will re-request the file on each subsequent request.
+
+##Cache Header Value
+1. Public 
+   Public resources can be cached not only by the enduser’s browser but also by any intermediate proxies that may be serving many other users as well.
+
+   Cache-Control:public
+
+2. Private  
+   Private resources are bypassed by intermediate proxies and can only be cached by the end-client.
+
+   Cache-Control:private
+
+3.  max-age  
+    Indicating the maximum amount of time it can be cached before considered stale. 
+    This value sets a timespan for how long to cache the resource (in seconds).
+
+    Cache-Control:public, max-age=31536000
+
+4. Expires 
+   When accompanying the cache-control header, Expires simply sets a date from which the cached resource should no longer be considered valid.
+   From this date forward the browser will request a fresh copy of the resource. 
+   Until then, the browsers local cached copy will be used.
+   If both Expires and max-age are set max-age will take precedence.
+
+   *Expire sama seperti max-age, bedanya kalo expire satuannya hari, kalo max-age satuannya waktu.
+
+
+
+
+
+### Configuration Nginx ###
+#File Configuration 
+nano /etc/nginx/nginx.conf 
+
+user www-data;
+worker_processes auto;
+load_module /etc/nginx/modules/ngx_http_image_filter_module.so;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include mime.types;
+    server {
+        listen 80;
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+
+        location = /port.jpg {
+            return 200 "Hello this is Dummy Location";
+        }
+    }
+}
+
+#browser
+curl -I 104.131.80.130/port.jpg 
+
+HTTP/1.1 200 ok
+Server: nginx/1.19.1
+Date: Sun, 19 May 2024 05:24:00 GMT
+Content-Type: image/jpeg
+Content-Length: 28
+Connection: keep-alive
+
+
+#File Configuration 2
+nano /etc/nginx/nginx.conf 
+
+user www-data;
+worker_processes auto;
+load_module /etc/nginx/modules/ngx_http_image_filter_module.so;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include mime.types;
+    server {
+        listen 80;
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+
+        location = /port.jpg {
+            return 200 "Hello this is Dummy Location";
+            add_header my_header "dummy value";
+        }
+    }
+}
+
+#browser
+curl -I 104.131.80.130/port.jpg 
+
+HTTP/1.1 200 ok
+Server: nginx/1.19.1
+Date: Sun, 19 May 2024 05:24:00 GMT
+Content-Type: image/jpeg
+Content-Length: 28
+Connection: keep-alive
+my_header: dummy value
+
+
+#File Configuration 3
+nano /etc/nginx/nginx.conf 
+
+user www-data;
+worker_processes auto;
+load_module /etc/nginx/modules/ngx_http_image_filter_module.so;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include mime.types;
+    server {
+        listen 80;
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+
+        location = /port.jpg {
+            return 200 "Hello this is Dummy Location";
+            add_header Cache-Control public;
+            add_header Pragma public;
+            add_header Vary Accept-Encoding;
+            expires 2Y;
+        }
+    }
+}
+
+#browser
+curl -I 104.131.80.130/port.jpg 
+
+HTTP/1.1 200 ok
+Server: nginx/1.19.1
+Date: Sun, 19 May 2024 05:24:00 GMT
+Content-Type: image/jpeg
+Content-Length: 28
+Connection: keep-alive
+Expires: Thu, 19 May 2026 05:24:00 GMT
+Cache-Control max-age=5184000
+Cache-Control: public 
+Pragma: public 
+Vary: Accept-Encoding
+
+
+#File Configuration 4
+nano /etc/nginx/nginx.conf 
+
+user www-data;
+worker_processes auto;
+load_module /etc/nginx/modules/ngx_http_image_filter_module.so;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include mime.types;
+    server {
+        listen 80;
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+
+        location ~* \.(css|js|jpg|jpeg|png) {
+            return 200 "Hello this is Dummy Location";
+            add_header Cache-Control public;
+            add_header Pragma public;
+            add_header Vary Accept-Encoding;
+            expires 2M;
+        }
+    }
+}
+

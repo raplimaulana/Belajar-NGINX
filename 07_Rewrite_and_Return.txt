@@ -1,0 +1,66 @@
+### Return and Rewrite ###
+Purpose for Return and rewrite:
+- If a URL has changed.
+- To control the request within Nginx.
+  For example, a request can be forwarded to an application if the content will be generated dynamically.
+
+##Return and rewrite
+1. Return Directive  
+   Return is the simpler directive to use compared to NGINX rewrite.
+   Return must be enclosed within a server or location block which defines which URLs should be rewritten.
+   
+   server {
+        listen 80;
+        server_name www.old-website.com;
+        return 301 $scheme://www.new-website.com$request_uri;
+   }
+
+2. Rewrite Directive 
+   This directive needs to be in a location or server block in order to rewrite the URL.
+   Rewrite directive can be used to perform more granular tasks as with it you can perform more complicated URL distinctions such as:
+   - Capture elements in the original URL
+   - Change or add elements in the path
+   
+   Rewrite directive does not send a redirect to the client in all cases. 
+   If the rewritten URL matches with another following directive, Nginx will rewrite the URL again.
+   A rewrite directive will only return an HTTP 301 or 302 status code. 
+   If another status code is required, a return directive is needed after the rewrite directive.
+
+   server {
+        listen 80;
+        server_name www.old-website.com;
+        rewrite regex URL [flag];
+   }
+   
+
+
+
+
+
+### Configuration Nginx ###
+#File Configuration 
+nano /etc/nginx/nginx.conf 
+
+events {
+
+}
+
+http {
+    include mime.types;
+    server {
+        listen 8081;
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+        rewrite ^/guest/\w+ /welcome;
+        rewrite ^/guest/(\w+) /welcome/$1;
+
+        location /welcome {
+            return 301 /assets/images/about/welcome-banner.jpg;
+        }
+    }
+}
+
+#browser
+curl 104.131.80.130:8081/welcome
+welcome-banner.jpg

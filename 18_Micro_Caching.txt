@@ -1,0 +1,102 @@
+### Micro Caching ###
+Caching static content, such as images, JavaScript and CSS files, and web content that rarely changes is a relatively straightforward process.
+Caching personalized content (that is, content customized for each user by the server application) is generally not possible, because the server’s response differs for every request for the same resource.
+
+##Dynamic Content 
+This Content can change unpredictably, but is not personalized for each user (or is personalized using JavaScript on the client device).
+Examples of dynamic content suitable for caching include:
+- The front page of a busy news or blog site, where new articles are posted every few seconds.
+- An RSS feed of recent information.
+- The status page for a continuous integration (CI) or build platform.
+- An inventory, status, or fundraising counter.
+- Lottery results.
+- Calendar data.
+- Personalized dynamic content is generated on the client device, such as advertising content or data (‘Hello, your name’) that is calculated using cookie data.
+
+##Micro Caching
+Micro Caching is used to cache the dynamic content.
+Microcaching is a caching technique whereby content is cached for a very short period of time. 
+NGINX uses a persistent disk-based cache located somewhere in the local file system.
+
+##FastCGI 
+FastCGI is a widely-used protocol for interfacing interactive applications such as PHP with web servers such as NGINX.
+The main advantage of FCGI is that it manages multiple CGI requests in a single process.
+Under NGINX, the FastCGI content cache is declared using a directive called fastcgi_cache_path in the top-level http{} context, within the NGINX configuration structure.
+User can also add the fastcgi_cache_key which defines a key (request identifier) for caching.
+
+fastcgi_cache_path Directive Parameters:
+1. /var/cache/nginx 
+   The path to the local disk directory for the cache.
+
+2. levels 
+   Defines the hierarchy levels of a cache, it sets up a two-level directory hierarchy under /var/cache/nginx.
+
+3. keys_zone (name:size) 
+   Enables the creation of a shared memory zone where all active keys and information about data (meta) are stored. 
+   Note that storing the keys in memory speeds up the checking process, by making it easier for NGINX to determine whether it’s a MISS or HIT, without checking the status on disk.
+
+4. inactive 
+   Specifies the amount of time after which cached data that are not accessed during the time specified get deleted from the cache regardless of their freshness.
+
+5. max_size 
+   Specifies the maximum size of the cache
+
+NGINX uses them in calculating the key of a request.
+Importantly, to send a cached response to the client, the request must have the same key as a cached response.
+fastcgi_cache_key Directive Parameters:
+1. $scheme 
+   Request scheme, HTTP or HTTPS.
+
+2. $request_method 
+   Request method, usually “GET” or “POST”.
+
+3. $host 
+   This can be hostname from the request line, or hostname from the “Host” request header field, or the server name matching a request, in the order of precedence.
+
+4. $request_uri 
+   Means the full original request URI.
+
+
+
+
+### Configuration Nginx ###
+#File Configuration 
+nano /etc/nginx/nginx.conf 
+
+user www-data;
+worker_processes auto;
+load_module /etc/nginx/modules/ngx_http_image_filter_module.so;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include mime.types;
+    fastcgi_cache_path /tmp/cache_nginx levels=1:2 keys_zone=ZONE_1:100m inactive=60m;
+    fastcgi_cache_key "$schme$request_method$host$request_uri";
+
+    server {
+        listen 80;
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+        index index.php index.html;
+
+        location / {
+            try_files $uri $uri/ =404;
+        }
+
+        location ~\.php$ {
+            #pass php request to the php-fpm service (fastcgi)
+            include fastcgi.conf 
+            fastcgi_pass unix:/run/php/php7.2-fpm.sock;
+
+            fastcgi_cache ZONE_1;
+            fastcgi_cache_valid 200 60m;
+        }
+    }
+}
+
+#browser
+curl -I 104.131.80.130

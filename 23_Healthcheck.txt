@@ -1,0 +1,175 @@
+### Pasive Healthcheck ###
+Health check is a scheduled rule used to send the same request to each member.
+Health check sends a request to each member of the load balancer group to establish the availability of each member server to accept the client requests.  
+For some types of health checks, the response from the server is calculated to determine the health status of each member server. 
+The successful completion of the health check needs that the server passes normal TCP and HTTP connection criteria.
+In the TCP mode, a health check is performed with a TCP connection request. 
+And in the HTTP mode which is the standard health check type, a health check is performed with an HTTP GET or HTTP POST method.
+Nginx Plus and Nginx open source can continually test our upstream servers, avoid the servers that have failed, and gracefully add the recovered servers into the load-balanced group.
+
+Healthcheck in nginx:
+1. Passive healthcheck 
+   For passive health checks, NGINX and NGINX Plus monitor transactions as they happen, and try to resume failed connections. 
+   If the transaction still cannot be resumed, NGINX Open Source and NGINX Plus mark the server as unavailable and temporarily stop sending requests to it until it is marked active again.
+
+   - fail_timeout
+     Sets the time during which a number of failed attempts must happen for the server to be marked unavailable, and also the time for which the server is marked unavailable (default is 10 seconds).
+
+   - max_fails 
+     Sets the number of failed attempts that must occur during the fail_timeout period for the server to be marked unavailable (default is 1 attempt).
+
+    *If there is only a single server in a group, the fail_timeout and max_fails parameters are ignored and the server is never marked unavailable.
+
+2. Active healthcheck (This is not available with Open-Source Nginx)
+   NGINX Plus can periodically check the health of upstream servers by sending special health-check requests to each server and verifying the correct response.
+
+   - health_check Directive 
+     This is used to send the active health check on Upstream Servers.
+
+     server {
+       location / {
+         proxy_pass http://backend;
+         health_check;
+        }
+     }
+
+   - Interval, fails and passes healthcheck.
+
+     server {
+       location / {
+         proxy_pass http://backend;
+         health_check interval=10 fails=3 passes=2;
+        }
+     }
+
+   - Specify Request URI
+     
+     server {
+       location / {
+         proxy_pass http://backend;
+         health_check uri=/some/path;
+        }
+     }
+
+   - Custom Condition 
+     User can set custom conditions that the response must satisfy for the server to pass the health check.
+
+     http {
+       #...
+       match server_ok {
+         status 200-399;
+         body !~ "maintenance mode";
+       }
+
+       server {
+         #...
+         location / {
+           proxy_pass http://backend; 
+           health_check match=server_ok;
+         }
+       }
+     }
+
+
+
+
+### Configuration Nginx ###
+##Passive healthcheck
+#File Configuration 
+nano /etc/nginx/nginx.conf 
+
+user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+include /etc/nginx/modules-enabled/*.conf;
+
+events {
+    worker_connections 768;
+    #multi_accept on;
+}
+
+http {
+    include /etc/nginx/mime.types;
+
+    access_log /var/log/nginx/acces.log;
+    error_log /var/log/nginx/error.log;
+
+    upstream appserver{
+        server 104.131.80.130 max_fails=5 fail_timeout=30s;
+        server 167.172.161.192;
+    }
+
+    server {
+        location / {
+            proxy_pass http://appserver;
+        }
+    }
+}
+
+
+
+##Active healthcheck
+#File Configuration  
+nano /etc/nginx/nginx.conf 
+
+user nginx;
+worker_processes auto;
+
+error_log /var/log/nginx/error.log notice;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer"'
+    access_log /var/log/nginx/acces.log main;
+
+    upstream cluster_fnt{
+        zone cluster_fnt 64k;
+        state /var/lib/nginx/state/cluster_fnt.state;     #.state berisi ip server 
+    }
+
+    upstream cluster_back{
+        zone cluster_fnt 64k;
+        state /var/lib/nginx/state/cluster_back.state;     #.state berisi ip server 
+    }
+
+    server {
+        listen 80;
+
+        location / {
+            proxy_set_header Host $host;
+            proxy_pass http://cluster_fnt;
+        }
+
+        location ~/.php {
+            proxy_set_header Host $host;
+            proxy_pass http://cluster_back;
+        }
+
+        location @fnt_hc {
+            proxy_set_header Host $host;
+            proxy_pass http://cluster_fnt;
+            health_check uri=/<Healthcheck URI>;
+        }
+
+        location @back_hc {
+            proxy_set_header Host $host;
+            proxy_pass http://cluster_back;
+            health_check uri=/<Healthcheck URI>;
+        }
+
+        location /upstream_conf {
+            api write=on;
+        }
+
+        error_page 500 502 503 504 /custom_50x.html;
+        location = /custom_50x.html{
+            root /etc/nginx;
+        }
+    }
+}

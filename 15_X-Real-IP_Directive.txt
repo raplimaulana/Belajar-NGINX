@@ -1,0 +1,87 @@
+### X-Real-IP Directive ###
+#check enable module
+nginx -v  
+
+--sbin-path=/usr/bin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/acces.log --with-pcre --pid-path=/var/run/nginx.pid --with-http_ssl_module --with-http_image_filter_module=dynamic --modules-path=/etc/nginx/modules
+
+#check available module
+./configure  --help | grep realip 
+./configure --sbin-path=/usr/bin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/acces.log --with-pcre --pid-path=/var/run/nginx.pid --with-http_ssl_module --with-http_image_filter_module=dynamic --modules-path=/etc/nginx/modules --with=http_realip_module
+make 
+make install
+
+*https://nginx.org/en/docs/http/ngx_http_realip_module.html
+
+
+
+
+### Configuration Nginx ###
+#File Configuration server 1
+nano /etc/nginx/nginx.conf 
+
+user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+load_module /etc/nginx/modules/ngx_http_image_filter_module.so;
+
+events {
+    worker_connections 768;
+    #multi_accept on;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    
+    access_log /var/log/nginx/acces.log;
+    error_log /var/log/nginx/error.log;
+
+    server {
+        listen 80;
+        server_name 206.189.132.205;
+
+        location / {
+            proxy_pass http://104.131.80.130;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarder-For $proxy_add_x_forwarded_for;
+        }
+    }
+
+    server {
+        listen 8080;
+        server_name 206.189.132.205;
+
+        location / {
+            proxy_pass http://164.189.132.205;
+        }
+    }
+}
+
+#File Configuration server 2
+nano /etc/nginx/nginx.conf 
+
+user www-data;
+worker_processes auto;
+load_module /etc/nginx/modules/ngx_http_image_filter_module.so;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include mime.types;
+
+    log_format specialLog '$http_x_real_ip - $remote_user [$time_local]'
+                          '"$request" $status $body_bytes_sent'
+                          '"$http_referer" "$http_user_agent" $remote_addr';
+
+    access_log /var/log/nginx/access-special.log specialLog;
+    access_log /var/log/nginx/acces.log;
+    error_log /var/log/nginx/error.log;
+
+    server {
+        listen 80;
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+    }
+}

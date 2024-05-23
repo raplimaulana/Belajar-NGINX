@@ -1,0 +1,70 @@
+### Limit Access on Resources ###
+1. Limiting the Bandwidth
+   limit_rate directive can be used to rate the bandwidth.
+
+   location /download/ {
+     limit_rate 50k;
+   }
+
+2. Limit Speed Per connection
+
+   limit_conn_zone $binary_remote_address zone=addr:10m
+
+   location /download/ {
+     limit_conn addr 1;
+     limit_rate 50k;
+   }
+
+3. Limiting the Bandwidth
+   To impose the limit only after the client downloads a certain amount of data.
+
+   location /download/ {
+     limit_conn addr 1; 
+     limit_rate_after 500k;
+     limit_rate 50k;
+   }
+
+
+
+
+### Configuration Nginx ###
+#File list allow IP
+nano /etc/nginx/whitelistip
+
+allow 127.0.0.1
+allow 190.10.10.0/24;
+
+#File Configuration 
+nano /etc/nginx/nginx.conf 
+
+user www-data;
+worker_processes auto;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include mime.types;
+
+    server {
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+
+        location / {
+            try_files $uri $uri/ =404;
+            limit_rate 100k;
+        }
+
+
+        location ~ \.(jpg) {
+            try_files $uri $uri/ =404;
+            include /etc/nginx/whitelistip;
+            deny all;
+        }
+    }
+}
+
+#browser
+curl -I http://104.131.80.130/assets/images/portofolio/p2.png

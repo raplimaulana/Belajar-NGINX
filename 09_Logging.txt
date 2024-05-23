@@ -1,0 +1,29 @@
+### Logging in Nginx ###
+location log Nginx in /var/log/nginx/error.log and /var/log/nginx/access.log
+
+#File Configuration 
+nano /etc/nginx/nginx.conf 
+
+events {
+
+}
+
+http {
+    include mime.types;
+    server {
+        listen 8081;
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+
+        location /userdata {
+            #access_log off;
+            access_log /var/log/nginx/access_user.log;
+            return 200 "User data is published!!!";
+        }
+    }
+}
+
+#browser
+curl 104.131.80.130:8081/testobject
+profile_image.jpg 

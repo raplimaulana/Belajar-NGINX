@@ -1,0 +1,18 @@
+### Command Nginx ###
+##Start Service
+systemctl start nginx
+
+##Stop Service
+systemctl stop nginx
+
+##Restart-Service
+systemctl restart nginx
+
+##Check Service Status
+systemctl status nginx
+
+##Enable service, auto-start on boot
+systemctl enable nginx
+
+##Check configuration Nginx 
+nginx -t 

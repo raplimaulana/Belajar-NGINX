@@ -1,0 +1,41 @@
+### Handle Dynamic Request ###
+
+### Configuration Nginx ###
+#file php
+nano /bloggingtemplate/info.php
+
+<?php 
+  phpinfo();
+?> 
+
+#File Configuration 
+nano /etc/nginx/nginx.conf 
+
+user www-data;
+events {
+
+}
+
+http {
+    include mime.types;
+    server {
+        listen 8081;
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+
+        index index.php index.html;
+
+        location / {
+            try_files $uri $uri/ =404;
+        }
+        location ~\.php{
+            include fastcgi.conf;                           #location file /etc/nginx/fastcgi.conf
+            fastcgi_pass unix:/run/php/php7.2-fpm.sock;
+        }
+    }
+}
+
+#browser
+curl 104.131.80.130:8081/index.php
+index.php

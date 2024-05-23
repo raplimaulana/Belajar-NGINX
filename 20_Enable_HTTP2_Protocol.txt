@@ -1,0 +1,71 @@
+### Enable HTTP2 Protocol ###
+Why HTTP2?
+HTTP1.1 was limited to processing only one outstanding request per TCP connection, forcing browsers to use multiple TCP connections to process multiple requests simultaneously.
+Web browsers using multiple connections to process additional requests occupy a greater share of the available network resources, hence downgrading network performance for other users.
+
+
+##HTTP/2 Feature Upgrades
+1. Multiplexed streams
+   Bi-directional sequence of text format frames sent over the HTTP/2 protocol exchanged between the server and client are known as “streams”.
+   Earlier iterations of the HTTP protocol were capable of transmitting only one stream at a time along with some time delay between each stream transmission.
+   HTTP2 helped server to disintegrate the HTTP payload into small, independent and manageable interleaved sequence of frames. This information is then reassembled at the other end.
+   With this capability, data packages from multiple streams are essentially mixed and transmitted over a single TCP connection. These packages are then split at the receiving end and presented as individual data streams. 
+   Transmitting multiple parallel requests simultaneously using HTTP version 1.1 or earlier required multiple TCP connections
+
+2. HTTP/2 Server Push
+   This capability allows the server to send additional cacheable information to the client that isn’t requested but is anticipated in future requests.
+
+3. Binary Protocols
+   HTTP1.x used to process text commands to complete request-response cycles. 
+   HTTP/2 will use binary commands to execute the same tasks.
+   - Effective network resource utilization.
+   - Eliminating security concerns associated with the textual nature of HTTP1.x such as response splitting attacks.
+   - Efficient and robust in terms of processing of data between client and server.
+
+4. Stateful Header Compression
+   It uses the HPACK specification as a simple and secure approach to header compression. 
+   Both client and server maintain a list of headers used in previous client-server requests.
+   HPACK compresses the individual value of each header before it is transferred to the server, which then looks up the encoded information in list of previously transferred header values to reconstruct the full header information.
+
+#check available module
+./configure  --help | grep http  
+./configure --sbin-path=/usr/bin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/acces.log --with-pcre --pid-path=/var/run/nginx.pid --with-http_ssl_module --with-http_image_filter_module=dynamic --modules-path=/etc/nginx/modules --with=http_realip_module --with-http_v2_module
+make 
+make install
+
+
+
+
+### Configuration Nginx ###
+#File Configuration 
+nano /etc/nginx/nginx.conf 
+
+user www-data;
+worker_processes auto;
+load_module /etc/nginx/modules/ngx_http_image_filter_module.so;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include mime.types;
+
+    server {
+        listen 443 ssl http2;
+        server_name 104.131.80.130;
+
+        ssl_certificate /etc/nginx/ssl/self.cert;
+        ssl_certificate_key /etc/nginx/ssl/slef.key;
+
+        root /bloggingtemplate/;
+        index index.php index.html;
+
+        location / {
+            try_files $uri $uri/ =404;
+        }
+    }
+}
+
+#browser
+curl -I 104.131.80.130

@@ -1,0 +1,86 @@
+### Rate Limit ###
+Rate limit allows User to limit the amount of HTTP requests a user can make in a given period of time.
+Rate limiting used for security purposes. For example, to slow down brute force password guessing attacks.
+To protect against DDoS attacks by limiting the incoming request rate to a value typical for real users, and identify the targeted URLs.
+
+
+
+
+### Configuration Nginx ###
+#Install siege for testing ddos attack
+apt-get install siege
+
+#test access 
+curl -Ik https://104.131.80.130/assets/js/custom.js
+
+siege -v -r 2 -c 5 https://104.131.80.130/assets/js/custom.js
+siege -v -r 20 -c 5000 https://104.131.80.130/assets/js/custom.js
+
+
+#File Configuration 1
+nano /etc/nginx/nginx.conf 
+
+user www-data;
+worker_processes auto;
+load_module /etc/nginx/modules/ngx_http_image_filter_module.so;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include mime.types;
+    limit_req_zone $binary_remote_addr;
+
+    server {
+        listen 443 ssl http2;
+        server_name 104.131.80.130;
+
+        ssl_certificate /etc/nginx/ssl/self.cert;
+        ssl_certificate_key /etc/nginx/ssl/slef.key;
+
+        root /bloggingtemplate/;
+        index index.php index.html;
+
+        location / {
+            try_files $uri $uri/ =404;
+        }
+    }
+}
+
+#File Configuration 2
+nano /etc/nginx/nginx.conf 
+
+user www-data;
+worker_processes auto;
+load_module /etc/nginx/modules/ngx_http_image_filter_module.so;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include mime.types;
+    limit_req_zone $request_uri zone=test_zone:10m rate=1r/s;
+
+    server {
+        listen 443 ssl http2;
+        server_name 104.131.80.130;
+
+        ssl_certificate /etc/nginx/ssl/self.cert;
+        ssl_certificate_key /etc/nginx/ssl/slef.key;
+
+        root /bloggingtemplate/;
+        index index.php index.html;
+
+        location / {
+            limit_req zone=test_zone;
+            #limit_req zone=test_zone burst=5;
+            #limit_req zone=test_zone burst=5 nodelay;
+            try_files $uri $uri/ =404;
+        }
+    }
+}
+
+#browser
+curl -I 104.131.80.130

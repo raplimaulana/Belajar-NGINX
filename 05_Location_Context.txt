@@ -1,0 +1,117 @@
+### Location Context ###
+Location Context is a Location blocks live within server blocks (or other location blocks) and are used to decide how to process the request URI.
+Example:
+location optional_modifier location_match {
+}
+
+##location_match 
+Defines what Nginx should check the request URI against.
+The existence or nonexistence of the modifier, affects the way that the Nginx attempts to match the location block.The modifiers below will cause the associated location block to be interpreted as follows:
+1. (none) 
+   If no modifiers are present, the location is interpreted as a prefix match. This means that the location given will be matched against the beginning of the request URI to determine a match.
+2. = 
+   If an equal sign is used, this block will be considered a match if the request URI exactly matches the location given.
+3. ~
+   If a tilde modifier is present, this location will be interpreted as a case-sensitive regular expression match.
+4. ~* 
+   If a tilde and asterisk modifier is used, the location block will be interpreted as a case-insensitive regular expression match.
+5. ^~ 
+   If a carat and tilde modifier is present, and if this block is selected as the best non-regular expression match, regular expression matching will not take place.
+
+*priority
+1. Exact Match               = URI
+2. Preferential Prefix Match ^~ URI
+3. REGEX Match               ~* URI
+
+
+### Configuration Nginx ###
+#File Configuration 1
+nano /etc/nginx/nginx.conf 
+
+events {
+
+}
+
+http {
+    include mime.types
+    server {
+        listen 8081;
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+
+        location /contactus {
+            return 200 "Hello you are inside custom location!!!";
+        }
+    }
+}
+
+#browser
+curl 104.131.80.130:8081/contactus
+Hello you are inside custom location!!!
+
+curl 104.131.80.130:8081/contactus/about/myself
+Hello you are inside custom location!!!
+
+
+
+#File Configuration 2
+nano /etc/nginx/nginx.conf 
+
+events {
+
+}
+
+http {
+    include mime.types
+    server {
+        listen 8081;
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+
+        location = /contactus {
+            return 200 "Hello you are inside custom location!!!";
+        }
+    }
+}
+
+#browser
+curl 104.131.80.130:8081/contactus
+Hello you are inside custom location!!!
+
+curl 104.131.80.130:8081/contactus/about/myself
+404 Not Found
+
+
+
+#File Configuration 3
+nano /etc/nginx/nginx.conf 
+
+events {
+
+}
+
+http {
+    include mime.types;
+    server {
+        listen 8081;
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+
+        location  /contactus {
+            return 200 "Hello you are inside custom location!!!";
+        }
+        location ~* /contactus {
+            return 200 "Hello you are inside custom location!!!- REGEX CASE SENSITIVE MATCH!!!";
+        }
+    }
+}
+
+#browser
+curl 104.131.80.130:8081/contactus
+Hello you are inside custom location!!!
+
+curl 104.131.80.130:8081/contactus/about/myself
+Hello you are inside custom location!!!- REGEX CASE SENSITIVE MATCH!!!

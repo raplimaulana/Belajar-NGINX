@@ -1,0 +1,32 @@
+### Install Nginx ### 
+#Update Packages
+Ubuntu - apt-get update
+CentOS - yum update
+
+#Download the Nginx source code from nginx.org
+https://nginx.org/download/nginx-1.19.1.tar.gz
+
+#Unzip the file.
+tar -zxvf nginx-1.19.1.tar.gz
+
+#Configure source code to the build.
+./configure
+
+#Install code compiler
+Ubuntu : apt-get install build-essential
+CentOS : yum groupinstall "Development Tools"
+
+#Configure source code to the build.
+./configure
+
+#GET Support Libraries
+Ubuntu : apt-get install libpcre3 libpcre3-dev zlib1g zlib1g-dev libssl-dev make
+CentOS : yum install pcre pcre-devel zlib zlib-devel openssl openssl-devel make
+
+#Execute configuration again
+./configure --sbin-path=/usr/bin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --with-pcre --
+pid-path=/var/run/nginx.pid --with-http_ssl_module
+
+#Compile and install Nginx
+make
+make install

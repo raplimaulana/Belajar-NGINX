@@ -1,0 +1,109 @@
+### Performance Optimization ###
+Nginx ----> RAM Memory
+      ----> System Memory 
+
+Buffer Size is another aspect to manage the Nginx Performance.
+If the buffer sizes are too low, then Nginx will have to write to a temporary file causing the disk to read and write constantly.
+
+1. client_body_buffer_size
+   This handles the client buffer size, meaning any POST actions sent to Nginx. 
+   POST actions are typically form submissions.
+
+2. client_header_buffer_size 
+   Similar to the previous directive, only instead it handles the client header size.
+
+3. client_max_body_size 
+   The maximum allowed size for a client request. 
+   If the maximum size is exceeded, then Nginx will spit out a 413 error or Request Entity Too Large.
+
+4. large_client_header_buffers
+   The maximum number and size of buffers for large client.
+
+5. client_body_timeout and client_header_timeout 
+   Both directives are responsible for the time a server will wait for a client body or client header to be sent after request. 
+   If neither a body or header is sent, the server will issue a 408 error or Request time out.
+
+6. keepalive_timeout 
+   Assigns the timeout for keep-alive connections with the client. 
+   Nginx will close connections with the client after this period of time.
+
+7. gzip
+   Gzip can help reduce the amount of network transfer Nginx deals with. 
+   However, be careful increasing the gzip_comp_level too high as the server will begin wasting cpu cycles.
+
+   gzip on;
+   gzip_comp_level 2;
+   gzip_min_length 1000;
+   gzip_types text/plain application/x-javascript text/xml text/css
+   application/xml
+
+8. Static File Caching 
+   It’s possible to set expire headers for files that don’t change and are served regularly. 
+   This directive can be added to the actual Nginx server block.
+
+   location ~* .(jpg|jpeg|png|gif|ico|css|js)$ {
+       expires 365d;
+   }
+
+
+
+
+### Configuration Nginx ###
+#File Configuration 
+nano /etc/nginx/nginx.conf 
+
+user www-data;
+#worker_processes auto;
+worker_processes 4;
+events {
+    worker_connections 1024;
+}
+
+http {
+    include mime.types;
+
+    #Buffer size POST submissions 
+    client_body_buffer_size 10K;
+    client_max_body_size 8m;
+
+    #Buffer size for headers
+    client_header_buffer_size 1k;
+
+    #Max time to receive client headers/body 
+    client_body_timeout 12;
+    client_header_timeout 12;
+
+    #Max time to keep a connection open for
+    keepalive_timeout 15;
+
+    #Max time for the client accept/receive a response 
+    send_timeout 10;
+
+    #Skip buffering for static files 
+    sendfile on;
+
+    #Optimise sendfile packets
+    tcp_nopush on;
+
+    location ~* .(jpg|jpeg|png|gif|ico|iss|js)${
+        expires 365d;
+    }
+
+    server {
+        listen 8081;
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+
+        index index.php index.html;
+
+        location / {
+            try_files $uri $uri/ =404;
+        }
+        location ~\.php{
+            include fastcgi.conf;                           #location file /etc/nginx/fastcgi.conf
+            fastcgi_pass unix:/run/php/php7.2-fpm.sock;
+        }
+    }
+}
+

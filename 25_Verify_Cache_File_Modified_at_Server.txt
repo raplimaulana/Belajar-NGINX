@@ -1,0 +1,6 @@
+### Verify Cache File Modified at Server ###
+##If-Modified-Since HTTP Header 
+If-Modified-Since header indicates the time for which a browser first downloaded a resource from the server. This helps determine whether or not the resource has changed since the last time it was accessed.
+If the HTTP status of a particular resource is 304 Not Modified, this means that the file has not changed and there is no need to download it again. Having this ability allows both the website owner and visitor to conserve resources as the file does not have to be retrieved each time.
+
+*send HTTP 304 jika filenya sama dan send HTTP 200 jika filenya update

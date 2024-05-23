@@ -1,0 +1,96 @@
+### Try Files in Nginx Conf ###
+The try_files directive can be used to check whether the specified file or directory exists.
+Nginx makes an internal redirect if it does, or returns a specified status code if it doesn’t.
+
+
+
+
+
+### Configuration Nginx ###
+#File Configuration 
+nano /etc/nginx/nginx.conf 
+
+events {
+
+}
+
+http {
+    include mime.types;
+    server {
+        listen 8081;
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+
+        try_files /testobject /video;
+
+        location /video {
+            return 200 "Enjoy the movie!!!";
+        }
+    }
+}
+
+#browser
+curl 104.131.80.130:8081/testobject
+Enjoy the movie!!!
+
+curl 104.131.80.130:8081/nothing
+Enjoy the movie!!!
+
+
+#File Configuration 2
+nano /etc/nginx/nginx.conf 
+
+events {
+
+}
+
+http {
+    include mime.types;
+    server {
+        listen 8081;
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+
+        try_files /assets/images/about/profile_image.jpg /video;
+
+        location /video {
+            return 200 "Enjoy the movie!!!";
+        }
+    }
+}
+
+#browser
+curl 104.131.80.130:8081/testobject
+profile_image.jpg                           #karena imagennya ada
+
+curl 104.131.80.130:8081/nothing
+profile_image.jpg                           #karena imagennya ada
+
+
+#File Configuration 3 (Best Practice)
+nano /etc/nginx/nginx.conf 
+
+events {
+
+}
+
+http {
+    include mime.types;
+    server {
+        listen 8081;
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+
+        try_files /assets/images/about/profile_image.jpg /video /404;
+
+        location /video {
+            return 200 "Enjoy the movie!!!";
+        }
+        locatiom /404 {
+            return 404 "Sorry, this reource deosn't existing"
+        }
+    }
+}

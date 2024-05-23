@@ -1,0 +1,68 @@
+### Variable Nginx ###
+Nginx configuration can hold the variable and Nginx variable can hold the String Value.
+
+##Set directive is used to assign variable in Nginx.
+set $a "hello world"
+
+##Few Important inbuilt variables
+1. $args 
+   List of arguments on the request line.
+2. $body_bytes_sent 
+   Number of bytes sent to the client.
+3. $bytes_received 
+   Number of bytes received from a client.
+4. $connection_requests 
+   Current number of requests made via connection.
+5. $date_local  
+   Current time in the local time zone.
+6. $hostname 
+   Host name.
+7. $nginx_version 
+   Shows the nginx version.
+
+
+
+
+### Configuration Nginx ###
+#File Configuration 
+nano /etc/nginx/nginx.conf 
+
+events {
+
+}
+
+http {
+    include mime.types;
+    server {
+        listen 8081;
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+        
+        if ($arg_name == 'rapli'){
+            return 200 "Yes, I am rapli";
+        }
+        location /find {
+            return 200 "$hostname \n $args \n $connection_requests \n $nginx_version";
+        }
+    }
+}
+
+#browser
+curl 104.131.80.130:8081/find
+ubuntu-custom-nginx
+
+1
+1.19.1
+
+curl 104.131.80.130:8081/find?apikey=12345
+ubuntu-custom-nginx
+apikey=12345
+1
+1.19.1
+
+curl 104.131.80.130:8081/?name=rapli
+Yes, I am rapli
+
+curl 104.131.80.130:8081/?name=maaulana 
+web home page

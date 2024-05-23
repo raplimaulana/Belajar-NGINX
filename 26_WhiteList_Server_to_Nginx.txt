@@ -1,0 +1,57 @@
+### WhiteList Server to Nginx ###
+NGINX has inbuilt capability for Accept and Deny Traffic on IP basis.
+
+##Allow Traffic from Specific IP
+location /admin {
+    allow 190.99.00.71;
+    deny all;
+}
+
+
+
+
+### Configuration Nginx ###
+#File list allow IP
+nano /etc/nginx/whitelistip
+
+allow 127.0.0.1
+allow 190.10.10.0/24;
+
+#File Configuration 
+nano /etc/nginx/nginx.conf 
+
+user www-data;
+worker_processes auto;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include mime.types;
+
+    server {
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+
+        location / {
+            try_files $uri $uri/ =404;
+        }
+
+        location ~ \.(png) {
+            try_files $uri $uri/ =404;
+            allow 103.47.17.190;
+            deny all;
+        }
+        
+        location ~ \.(jpg) {
+            try_files $uri $uri/ =404;
+            include /etc/nginx/whitelistip;
+            deny all;
+        }
+    }
+}
+
+#browser
+curl -I http://104.131.80.130/assets/images/portofolio/p2.png

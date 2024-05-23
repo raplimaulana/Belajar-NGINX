@@ -1,0 +1,47 @@
+### Gzip Response ###
+How fast a website will load depends on the size of all of the files that have to be downloaded by the browser.
+Reducing the size of files to be transmitted can make the website not only load faster, but also cheaper to those who have to pay for their bandwidth usage.
+Response files can be minimise by configure Nginx to use gzip to compress files it serves on the fly.
+Compressing files use up server resources, so it is best to compress only those files that will reduce its size considerably in result.
+
+*jpg, jpeg, png tidak di compress karena secara default sudah di compress
+
+
+
+
+### Configuration Nginx ###
+#File Configuration 
+nano /etc/nginx/nginx.conf 
+
+user www-data;
+worker_processes auto;
+load_module /etc/nginx/modules/ngx_http_image_filter_module.so;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include mime.types;
+    gzip on;
+    gzip_comp_level 4;
+    gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;
+
+    server {
+        listen 80;
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+
+        location ~* \.(css|js|jpg|jpeg|png) {
+            add_header Cache-Control public;
+            add_header Pragma public;
+            add_header Vary Accept-Encoding;
+            expires 2M;
+        }
+    }
+}
+
+#browser
+curl -I 104.131.80.130/assets/js/jquery.js
+curl -H "Accept-Encoding: gzip, deflate" -I 104.131.80.130/assets/js/jquery.js

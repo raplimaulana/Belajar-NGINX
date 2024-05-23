@@ -1,0 +1,36 @@
+### Simple Configuration Nginx ###
+nano /etc/nginx/nginx.conf 
+
+events {
+
+}
+
+http {
+    types {
+        text/html html;                 #secara default nginx hanya membaca text atau file dan tidak bisa membaca extention
+        text/css css;                   #cek type yang tersedia di /etc/nginx/mime.types
+    }
+    server {
+        listen 80;
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+    }
+}
+
+
+atau
+
+events {
+
+}
+
+http {
+    include mime.types
+    server {
+        listen 80;
+        server_name 104.131.80.130;
+
+        root /bloggingtemplate/;
+    }
+}
